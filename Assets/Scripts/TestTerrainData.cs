@@ -11,7 +11,7 @@ public class TestTerrainData : MonoBehaviour {
     public MeshRenderer mesh;
     TerrainData td;
 
-
+	public Texture2D texture;
 
 
     float[,] hm;
@@ -23,15 +23,17 @@ public class TestTerrainData : MonoBehaviour {
     public float decay;
     public float iFlat = 0.2f;
     public float fGrassThreshold = 0.5f;
-    public float tileSizeBase = 1;
-    public float tileLowerBound = -2;
-    public float tileUpperBound = 10;
+	public float fMountainHeight;
+	public float fTileSizeX;
+	public float fTileSizeY;
 
 	// Use this for initialization
 	void Start () 
     {
         td = terrain.terrainData;
-        
+		texture = new Texture2D(td.heightmapWidth, td.heightmapHeight);
+		mesh.renderer.material.mainTexture = texture;
+		//mesh.material.SetTexture(0, texture);
 	}
 	
 	// Update is called once per frame
@@ -69,6 +71,7 @@ public class TestTerrainData : MonoBehaviour {
 
         if( Input.GetKeyDown(KeyCode.C))
         {
+			print ("texture");
             Texturize();
         }
         if (Input.GetKeyDown(KeyCode.D))
@@ -214,35 +217,7 @@ public class TestTerrainData : MonoBehaviour {
         {
             for (int y = 0; y < td.heightmapHeight; y++)
             {
-                //if not bottom or right edge grab random tile
-                if (x != td.heightmapWidth && y != td.heightmapHeight)
-                {
-                    tempTile = tileSizeBase + Random.Range(tileLowerBound, tileUpperBound);
-                }
-                //right edge, grab left edge
-                else if (x == td.heightmapWidth)
-                {
-                    tempTile = left[x];
-                }
-                else if (y == td.heightmapHeight)
-                {
-                    tempTile = top[y];
-                }
-                else
-                    print("custom error 1");
-
-                //left edge, save for later
-                if( x == 0)
-                {
-                    left[y] = tempTile;
-                }
-                    //top edge, save for later
-                else if( y == 0)
-                {
-                    top[x] = tempTile;
-                }
-
-                heights[x, y] = Mathf.PerlinNoise(((float)x / (float)td.heightmapWidth) * tempTile, ((float)y / (float)td.heightmapHeight) * tempTile) / 10.0f;
+                heights[x, y] = Mathf.PerlinNoise(((float)x / (float)td.heightmapWidth) * fTileSizeX, ((float)y / (float)td.heightmapHeight) * fTileSizeY) / 10.0f;
             }
         }
 
@@ -274,18 +249,16 @@ public class TestTerrainData : MonoBehaviour {
 // CHANGE THE RULES BELOW TO SET THE WEIGHTS OF EACH TEXTURE ON WHATEVER RULES YOU WANT
 
                 // Texture[0] has constant influence
-                splatWeights[1] = 0.5f;
+                splatWeights[3] = 0.5f;
 
-                // Texture[1] is stronger at lower altitudes
-                splatWeights[3] = Mathf.Clamp01((td.heightmapHeight - height));
+                // Sand is stronger at lower altitudes
+                splatWeights[0] = 1 - Mathf.Clamp01(height / fMountainHeight);
 
-                // Texture[2] stronger on flatter terrain
-                // Note "steepness" is unbounded, so we "normalise" it by dividing by the extent of heightmap height and scale factor
-                // Subtract result from 1.0 to give greater weighting to flat surfaces
-                splatWeights[0] = 1.0f - Mathf.Clamp01(steepness * steepness / (td.heightmapHeight / 5.0f));
+                // Grass stronger on flatter terrain
+                splatWeights[2] =  1 - Mathf.Clamp01(steepness * steepness / (fMountainHeight / 5.0f));
 
                 // Texture[3] increases with height but only on surfaces facing positive Z axis 
-                splatWeights[2] = height * Mathf.Clamp01(normal.z);
+				splatWeights[1] = Mathf.Clamp01(height / fMountainHeight);
 
                 // Sum of all textures weights must add to 1, so calculate normalization factor from sum of weights
                 float z = splatWeights.Sum();
@@ -309,21 +282,21 @@ public class TestTerrainData : MonoBehaviour {
 
     void HeightToTexture()
     {
-        Texture2D texture = new Texture2D(td.heightmapWidth, td.heightmapHeight);
+        //texture = new Texture2D(td.heightmapWidth, td.heightmapHeight);
         Color[] colors = new Color[td.heightmapHeight * td.heightmapWidth];
         hm = td.GetHeights(0, 0, td.heightmapWidth, td.heightmapHeight);
         for( int x = 0; x < td.heightmapWidth ; x ++)
         {
             for( int y = 0; y < td.heightmapHeight ; y ++)
             {
-                colors[x * td.heightmapWidth + y] = new Color(0, 0, 0);//new Color(hm[x, y], hm[x, y], hm[x, y]);
+                colors[x * td.heightmapWidth + y] = /*new Color(0, 0, 0, 1);//*/new Color(hm[x, y], hm[x, y], hm[x, y]);
                 //print(x.ToString() + "  " + y.ToString());
             }
         }
-
+		//texture.SetPixels(
         texture.SetPixels(colors);
+		texture.Apply(false);
 
-        mesh.material.SetTexture(0, texture);
     }
 }
 
