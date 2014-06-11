@@ -12,7 +12,7 @@ public class DiamondSquare4 : MonoBehaviour {
 	float pwidthpheight;
 	int GRAIN=8;
 	Texture2D texture;
-	int dummy=0;
+	//int dummy=0;
 	
 	// Use this for initialization
 	void Start () 

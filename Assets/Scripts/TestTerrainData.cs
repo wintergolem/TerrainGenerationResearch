@@ -62,7 +62,7 @@ public class TestTerrainData : MonoBehaviour {
             BottomLine();
         }
 
-        if (Input.GetKey(KeyCode.S))
+        if (Input.GetKey(KeyCode.F))
             Smooth();
         if( Input.GetKeyDown( KeyCode.P))
         {
@@ -141,7 +141,7 @@ public class TestTerrainData : MonoBehaviour {
         int temp = 0;
         bool btemp = false;
         float tempSmooth = smooth;
-        float tempDif = 0;
+        //float tempDif = 0;
         while (temp < iTimesThroughTheLoop)
         {
             temp++;
@@ -212,7 +212,7 @@ public class TestTerrainData : MonoBehaviour {
 
         float[] top = new float[td.heightmapWidth];
         float[] left = new float[td.heightmapHeight];
-        float tempTile = 0;
+        //float tempTile = 0;
         for (int x = 0; x < td.heightmapWidth; x++)
         {
             for (int y = 0; y < td.heightmapHeight; y++)
