@@ -24,6 +24,7 @@ public class TestTerrainData : MonoBehaviour {
     public float iFlat = 0.2f;
     public float fGrassThreshold = 0.5f;
 	public float fMountainHeight;
+    public float fSandHeight;
 	public float fTileSizeX;
 	public float fTileSizeY;
 
@@ -37,16 +38,9 @@ public class TestTerrainData : MonoBehaviour {
 	}
 	
 	// Update is called once per frame
-	void Update () {
-	
-        if(Input.GetKeyDown(KeyCode.R))
-        {
-            float f = td.GetHeight(0,0);
-            print(f.ToString());
-           
-        }
-
-        if( Input.GetKeyDown(KeyCode.E))
+	void Update () 
+    {
+        if( Input.GetKeyDown(KeyCode.F))
         {
             hm = new float[td.heightmapWidth, td.heightmapHeight];
             for (int x = 0; x < td.heightmapWidth; x++)
@@ -56,14 +50,6 @@ public class TestTerrainData : MonoBehaviour {
                 }
             td.SetHeights(0, 0, hm);
         }
-
-        if(Input.GetKeyDown(KeyCode.W))
-        {
-            BottomLine();
-        }
-
-        if (Input.GetKey(KeyCode.F))
-            Smooth();
         if( Input.GetKeyDown( KeyCode.P))
         {
             Perlin();
@@ -71,68 +57,11 @@ public class TestTerrainData : MonoBehaviour {
 
         if( Input.GetKeyDown(KeyCode.C))
         {
-			print ("texture");
             Texturize();
         }
-        if (Input.GetKeyDown(KeyCode.D))
+        if (Input.GetKeyDown(KeyCode.T))
             HeightToTexture();
 	}
-
-    void BottomLine()
-    {
-        hm = new float[td.heightmapWidth, td.heightmapHeight];
-        for (int x = 0; x < td.heightmapWidth; x++)
-            for (int y = 0; y < td.heightmapHeight; y++)
-            {
-                hm[x, y] = Random.Range(fRandMin, fRandMax);
-            }
-        int temp = 0;
-        float tempSmooth = smooth;
-        print("Starting");
-        while (temp < iTimesThroughTheLoop)
-        {
-            temp++;
-            for (int x = 0; x < td.heightmapWidth; x++)
-                for (int y = 0; y < td.heightmapHeight; y++)
-                {
-                    float h = hm[x, y];
-                    int tx = x + 1;
-                    int ty = y + 1;
-                    if (tx >= td.heightmapWidth)
-                        tx -= td.heightmapHeight;
-                    if (ty >= td.heightmapHeight)
-                        ty -= td.heightmapHeight;
-
-                    //adjust across
-                    if (hm[tx, y] < h)
-                    {
-                        h -= tempSmooth;
-                    }
-                    else
-                    {
-                        h += tempSmooth;
-                    }
-
-                    //adjust down
-                    if (hm[x, ty] < h)
-                        h -= tempSmooth;
-                    else
-                        h += tempSmooth;
-
-                    //normalize
-                    if (h >= 1)
-                        h = 0.9f;
-                    else if (h <= 0)
-                        h = 0.1f;
-                    hm[x, y] = h;
-                }
-            tempSmooth -= decay;
-            if (tempSmooth <= 0)
-                break;
-        }
-        td.SetHeights(0, 0, hm);
-        print("done");
-    }
 
     void Smooth()
     {
@@ -227,7 +156,7 @@ public class TestTerrainData : MonoBehaviour {
     void Texturize()
     {
         float[, ,] splatMapData = new float[td.alphamapWidth, td.alphamapHeight, td.alphamapLayers];
-
+        print(td.heightmapHeight.ToString());
         for( int y = 0; y < td.alphamapHeight; y++)
             for( int x = 0; x < td.alphamapWidth ; x++ )
             {
@@ -248,18 +177,31 @@ public class TestTerrainData : MonoBehaviour {
 
 // CHANGE THE RULES BELOW TO SET THE WEIGHTS OF EACH TEXTURE ON WHATEVER RULES YOU WANT
 
+                //texture[0] = sand
+                //1 = grass
+                //2 = mountain grass
+                //3 = mountain
+
                 // Texture[0] has constant influence
-                splatWeights[3] = 0.5f;
+                splatWeights[3] = 0.3f;
 
                 // Sand is stronger at lower altitudes
-                splatWeights[0] = 1 - Mathf.Clamp01(height / fMountainHeight);
+                splatWeights[0] = Mathf.Clamp01((fMountainHeight - height));
 
                 // Grass stronger on flatter terrain
-                splatWeights[2] =  1 - Mathf.Clamp01(steepness * steepness / (fMountainHeight / 5.0f));
+                splatWeights[1] = Mathf.Clamp01(steepness * steepness / (fMountainHeight / 5.0f));// 1.0f - Mathf.Clamp01(steepness * steepness / (td.heightmapHeight / 5.0f));
 
                 // Texture[3] increases with height but only on surfaces facing positive Z axis 
-				splatWeights[1] = Mathf.Clamp01(height / fMountainHeight);
+				splatWeights[2] = height > fMountainHeight ? Mathf.Clamp01(height / fMountainHeight) : 0;
 
+                if (height < fSandHeight)
+                {
+                    splatWeights[0] = 1;
+                    splatWeights[1] = 0;
+                    splatWeights[2] = 0;
+                    splatWeights[3] = 0;
+                }
+               
                 // Sum of all textures weights must add to 1, so calculate normalization factor from sum of weights
                 float z = splatWeights.Sum();
 
