@@ -198,7 +198,7 @@ public class TestTerrainData : MonoBehaviour {
                 {
                     splatWeights[0] = 1;
                     splatWeights[1] = 0;
-                    splatWeights[2] = 0;
+					splatWeights[2] = 1 - Mathf.Clamp01(steepness * steepness / (fMountainHeight));;
                     splatWeights[3] = 0;
                 }
                
